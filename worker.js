@@ -38,14 +38,14 @@ async function handleUpdate(update) {
         else if (text === '/about') {
             await sendAboutMessage(chatId, user);
         }
-        else if (text === '/VBMENU') {
+        else if (text === '🌺 video') {
             await sendVbMenu(chatId);
         }
         else if (text === '/info') {
             await sendUserInfo(chatId, user);
         }
         else if (text === '/hoto') {
-            await sendPhotos1(chatId);
+            await sendVideo1(chatId);
         }
         return new Response('OK');
     }
@@ -209,13 +209,13 @@ async function sendUserInfo(chatId, user) {
 }
 
 //
-async function sendPhotos1(chatId) {
-    const photoUrls = [
-        "https://t.me/kajal_developer/58",
-        "https://t.me/kajal_developer/58",
-        "https://t.me/kajal_developer/58",
-        "https://example.com/photo4.jpg",
-        "https://example.com/photo5.jpg",
+async function sendVideo1(chatId) {
+    const videoUrls = [
+        "https://t.me/igftcd/7",
+        "https://t.me/igftcd/8",
+        "https://t.me/igftcd/9",
+        "https://t.me/igftcd/10",
+        "https://t.me/igftcd/12?single",
         "https://example.com/photo6.jpg",
         "https://example.com/photo7.jpg",
         "https://example.com/photo8.jpg",
@@ -236,12 +236,12 @@ async function sendPhotos1(chatId) {
     ];
 
     for (let i = 0; i < photoUrls.length; i++) {
-        await fetch(`${BASE_URL}/sendPhoto`, {
+        await fetch(`${BASE_URL}/sendvideo`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 chat_id: chatId,
-                photo: photoUrls[i],
+                video: videoUrls[i],
                 reply_markup: { inline_keyboard: buttons }
             })
         });
