@@ -1,0 +1,6 @@
+name = "vvg"
+main = "worker.js"
+compatibility_date = "2025-02-12"
+
+[build]
+upload.format = "modules"
