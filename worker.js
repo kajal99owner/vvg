@@ -44,7 +44,7 @@ async function handleUpdate(update) {
         else if (text === '/info') {
             await sendUserInfo(chatId, user);
         }
-        else if (text === '/hoto') {
+        else if (text === '🌺 video1') {
             await sendVideo1(chatId);
         }
         return new Response('OK');
