@@ -6,6 +6,10 @@ compatibility_date = "2024-02-13"
 [build]
 command = ""
 
+kv_namespaces = [
+  { binding = "worker_metadata", id = "852e944e9aa44549a612b750658d1331" }
+]
+
 [build.upload]
 format = "modules"
 dir = ""
