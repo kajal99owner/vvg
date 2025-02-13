@@ -1,103 +1,58 @@
-const TELEGRAM_TOKEN = '7796187337:AAF-aOcWJzQljSl6RS61ex_htwdzFPt2FvI';
+const TELEGRAM_TOKEN = '7286429810:AAHBzO7SFy6AjYv8avTRKWQg53CJpD2KEbM';
 const BASE_URL = `https://api.telegram.org/bot${TELEGRAM_TOKEN}`;
-const WEBHOOK_PATH = '/endpoint';
 
-async function registerWebhook(webhookUrl) {
-    try {
-        const response = await fetch(`${BASE_URL}/setWebhook`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                url: webhookUrl,
-                allowed_updates: ['message', 'callback_query']
-            })
-        });
-        return response.json();
-    } catch (error) {
-        return new Response(`Webhook registration failed: ${error.message}`, { status: 500 });
-    }
-}
-
-async function unRegisterWebhook() {
-    try {
-        const response = await fetch(`${BASE_URL}/deleteWebhook`, {
-            method: 'POST'
-        });
-        return response.json();
-    } catch (error) {
-        return new Response(`Webhook removal failed: ${error.message}`, { status: 500 });
-    }
-}
 
 async function handleRequest(request) {
-    const url = new URL(request.url);
-    
-    // Webhook management endpoints
-    if (request.method === 'GET') {
-        if (url.pathname === '/register') {
-            const webhookUrl = `${url.origin}${WEBHOOK_PATH}`;
-            const result = await registerWebhook(webhookUrl);
-            return new Response(JSON.stringify(result), {
-                headers: { 'Content-Type': 'application/json' }
-            });
-        }
-        
-        if (url.pathname === '/unregister') {
-            const result = await unRegisterWebhook();
-            return new Response(JSON.stringify(result), {
-                headers: { 'Content-Type': 'application/json' }
-            });
-        }
-        
-        return new Response('Use /register or /unregister to manage webhook');
+    if (request.method === 'POST') {
+        const update = await request.json();
+        return handleUpdate(update);
     }
-
-    // Telegram webhook endpoint
-    if (request.method === 'POST' && url.pathname === WEBHOOK_PATH) {
-        try {
-            const update = await request.json();
-            return handleUpdate(update);
-        } catch (error) {
-            return new Response(`Error processing update: ${error.message}`, { status: 400 });
-        }
-    }
-
-    return new Response('Not Found', { status: 404 });
+    return new Response('OK');
 }
 
 async function handleUpdate(update) {
-    try {
-        if (update.callback_query) {
-            const { data, message: { chat: { id: chatId }, message_id } } = update.callback_query;
-            if (data === '/Commands') {
-                await deleteMessage(chatId, message_id);
-                await sendCommandsMenu(chatId);
-            }
-            return new Response('OK');
+    if (update.callback_query) {
+        const data = update.callback_query.data;
+        const chatId = update.callback_query.message.chat.id;
+        const messageId = update.callback_query.message.message_id;
+        
+        if (data === '/Commands') {
+            await deleteMessage(chatId, messageId);
+            await sendCommandsMenu(chatId);
         }
-
-        if (update.message) {
-            const { text, chat: { id: chatId }, from: user, message_id } = update.message;
-            
-            if (text === '/start') {
-                await sendWelcomeMessage(chatId, user);
-            }
-            else if (text === '/Commands') {
-                await deleteMessage(chatId, message_id);
-                await sendCommandsMenu(chatId);
-            }
-            else if (text === '/about') {
-                await sendAboutMessage(chatId, user);
-            }
-            return new Response('OK');
-        }
-
-        return new Response('Unhandled update type', { status: 400 });
-    } catch (error) {
-        return new Response(`Update handling error: ${error.message}`, { status: 500 });
+        return new Response('OK');
     }
+
+    if (update.message) {
+        const text = update.message.text;
+        const chatId = update.message.chat.id;
+        const user = update.message.from;
+
+        if (text === '/start') {
+            await sendWelcomeMessage(chatId, user);
+        }
+        else if (text === '/Commands') {
+            await deleteMessage(chatId, update.message.message_id);
+            await sendCommandsMenu(chatId);
+        }
+        else if (text === '/about') {
+            await sendAboutMessage(chatId, user);
+        }
+        else if (text === '/VBMENU') {
+            await sendVbMenu(chatId);
+        }
+        else if (text === '/info') {
+            await sendUserInfo(chatId, user);
+        }
+        else if (text === '/hoto') {
+            await sendPhotos(chatId);
+        }
+        return new Response('OK');
+    }
+
+    return new Response('OK');
 }
-//
+
 async function sendWelcomeMessage(chatId, user) {
     const videoUrl = "https://t.me/kajal_developer/57";
     const buttons = [
@@ -164,7 +119,8 @@ async function deleteMessage(chatId, messageId) {
         })
     });
 }
-//
+
+// about
 async function sendAboutMessage(chatId, user) {
     const aboutMessage = `
 <b><blockquote>⍟───[ MY ᴅᴇᴛᴀɪʟꜱ ]───⍟</blockquote>
@@ -190,11 +146,110 @@ async function sendAboutMessage(chatId, user) {
         })
     });
 }
+
 //
+async function sendVbMenu(chatId) {
+    const keyboard = {
+        keyboard: [
+            ["🌺 CP", "🇮🇳 Desi"],
+            ["🇬🇧 Forener", "🐕‍🦺 Animal"],
+            ["💕 Webseries", "💑 Gay Cp"],
+            ["💸 𝘽𝙐𝙔 𝙑𝙄𝙋 💸"]
+        ],
+        resize_keyboard: true,
+        one_time_keyboard: true
+    };
 
-// Keep all your existing message functions unchanged
-// (sendWelcomeMessage, sendCommandsMenu, sendAboutMessage, deleteMessage)
+    await fetch(`${BASE_URL}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            chat_id: chatId,
+            text: "🤗 Welcome to Lx Bot 🌺",
+            reply_markup: keyboard,
+            protect_content: true
+        })
+    });
+}
 
-export default {
-    fetch: handleRequest
-};
+// id info 
+async function sendUserInfo(chatId, user) {
+    const fullName = `${user.first_name || ''} ${user.last_name || ''}`.trim();
+    const username = user.username ? `@${user.username}` : 'None';
+    const userLink = user.username ? `https://t.me/${user.username}` : 'None';
+    const phoneNumber = user.phone_number ? user.phone_number : '!';
+    
+    const infoMessage = `
+<code>○➲ ɪᴅ: ${user.id}
+➲ ᴅᴄ_ɪᴅ: N/A
+➲ ꜰɪʀꜱᴛ ɴᴀᴍᴇ: ${escapeHtml(user.first_name || 'None')}
+➲ ʟᴀꜱᴛ ɴᴀᴍᴇ: ${escapeHtml(user.last_name || 'None')}
+➲ ꜰᴜʟʟ ɴᴀᴍᴇ: ${escapeHtml(fullName)}
+➲ ᴜꜱᴇʀɴᴀᴍᴇ: ${username}
+➲ ɪꜱ_ᴠᴇʀɪꜰɪᴇᴅ: ${user.is_verified ? 'Yes' : 'No'}
+➲ ɪꜱ_ʀᴇꜱᴛʀɪᴄᴛᴇᴅ: ${user.is_restricted ? 'Yes' : 'No'}
+➲ ɪꜱ_ꜱᴄᴀᴍ: ${user.is_scam ? 'Yes' : 'No'}
+➲ ɪꜱ_ꜰᴀᴋᴇ: ${user.is_fake ? 'Yes' : 'No'}
+➲ ɪꜱ_ᴩʀᴇᴍɪᴜᴍ: ${user.is_premium ? 'Yes' : 'No'}
+➲ ᴍᴇɴᴛɪᴏɴ: <a href="${userLink}">${username}</a>
+➲ ʟɪɴᴋ : <a href="${userLink}">${userLink}</a>
+➲ ᴩʜᴏɴᴇ ɴᴏ: ${phoneNumber}</code>
+    `;
+
+    await fetch(`${BASE_URL}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            chat_id: chatId,
+            text: infoMessage,
+            parse_mode: 'HTML',
+            disable_web_page_preview: true
+        })
+    });
+}
+
+//
+async function sendPhotos(chatId) {
+    const photoUrls = [
+        "https://t.me/kajal_developer/58",
+        "https://t.me/kajal_developer/58",
+        "https://t.me/kajal_developer/58",
+        "https://example.com/photo4.jpg",
+        "https://example.com/photo5.jpg",
+        "https://example.com/photo6.jpg",
+        "https://example.com/photo7.jpg",
+        "https://example.com/photo8.jpg",
+        "https://example.com/photo9.jpg",
+        "https://example.com/photo10.jpg",
+        "https://example.com/photo11.jpg",
+        "https://example.com/photo12.jpg"
+    ];
+
+    const channelName = "pornhub_Developer"; // Replace with your channel username
+    const buttons = [
+        [
+            {
+                text: "Join " + channelName,
+                url: "https://t.me/" + channelName
+            }
+        ]
+    ];
+
+    for (let i = 0; i < photoUrls.length; i++) {
+        await fetch(`${BASE_URL}/sendPhoto`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                chat_id: chatId,
+                photo: photoUrls[i],
+                reply_markup: { inline_keyboard: buttons }
+            })
+        });
+    }
+}
+
+// st
+addEventListener('fetch', event => {
+    event.respondWith(handleRequest(event.request));
+});
+ 
