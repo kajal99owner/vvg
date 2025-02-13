@@ -80,7 +80,7 @@ async function sendCommandsMenu(chatId) {
     const videoUrl = "https://t.me/kajal_developer/57"; 
     const buttons = [
         [
-            { text: "video 🌏", callback_data: "video1" },
+            { text: "video 🌏", callback_data: "Video1" },
             { text: "Tools", callback_data: "/tools" }
         ],
         [
