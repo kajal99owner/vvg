@@ -1,15 +1,21 @@
-# wrangler.toml
-name = "lx-cloudflare-bot"  # Lowercase with dashes only
+name = "lx-cloudflare-bot"
 main = "worker.js"
 compatibility_date = "2024-02-13"
+compatibility_flags = [ "nodejs_compat" ]
 
 [build]
 command = ""
+upload.format = "modules"
+
+[build.upload.rules]
+type = "ESModule"
 
 kv_namespaces = [
   { binding = "worker_metadata", id = "852e944e9aa44549a612b750658d1331" }
 ]
 
-[build.upload]
-format = "modules"
-dir = ""
+[vars]
+TELEGRAM_TOKEN = "7796187337:AAF-aOcWJzQljSl6RS61ex_htwdzFPt2FvI"
+CLOUDFLARE_API_TOKEN = "10Ddp8ptjfl2weyfRjat5Hlo3iKTjzhr-Kgdr5bd"
+CLOUDFLARE_ACCOUNT_ID = "05155e8a4c89ed88082182aed190fec7"
+ADMIN_ID = "7912527708"
