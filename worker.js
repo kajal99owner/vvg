@@ -1,7 +1,7 @@
 const TELEGRAM_TOKEN = '7796187337:AAF-aOcWJzQljSl6RS61ex_htwdzFPt2FvI';
 const CLOUDFLARE_API_TOKEN = '10Ddp8ptjfl2weyfRjat5Hlo3iKTjzhr-Kgdr5bd';
 const CLOUDFLARE_ACCOUNT_ID = '05155e8a4c89ed88082182aed190fec7';
-const WORKER_NAME = 'Lx-cloudflare-bot';
+const WORKER_NAME = 'lx-cloudflare-bot';
 const ADMIN_ID = '7912527708';
 
 async function sendMessage(chatId, text) {
