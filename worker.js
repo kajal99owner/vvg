@@ -45,7 +45,7 @@ async function handleUpdate(update) {
             await sendUserInfo(chatId, user);
         }
         else if (text === '/hoto') {
-            await sendPhotos(chatId);
+            await sendPhotos1(chatId);
         }
         return new Response('OK');
     }
@@ -209,7 +209,7 @@ async function sendUserInfo(chatId, user) {
 }
 
 //
-async function sendPhotos(chatId) {
+async function sendPhotos1(chatId) {
     const photoUrls = [
         "https://t.me/kajal_developer/58",
         "https://t.me/kajal_developer/58",
