@@ -235,8 +235,8 @@ async function sendVideo1(chatId) {
         ]
     ];
 
-    for (let i = 0; i < photoUrls.length; i++) {
-        await fetch(`${BASE_URL}/sendvideo`, {
+    for (let i = 0; i < videoUrls.length; i++) {
+        await fetch(`${BASE_URL}/sendVideo`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
