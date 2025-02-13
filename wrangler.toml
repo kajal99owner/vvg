@@ -7,7 +7,7 @@ compatibility_flags = [ "nodejs_compat" ]
 command = ""
 upload.format = "modules"
 
-[build.upload.rules]
+[[rules]]
 type = "ESModule"
 
 kv_namespaces = [
