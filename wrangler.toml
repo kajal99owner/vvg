@@ -1,6 +1,11 @@
-name = "Lx-cloudflare-bot"
+# wrangler.toml
+name = "lx-cloudflare-bot"  # Lowercase with dashes only
 main = "worker.js"
-compatibility_date = "2025-02-12"
+compatibility_date = "2024-02-13"
 
 [build]
-upload.format = "modules"
+command = ""
+
+[build.upload]
+format = "modules"
+dir = ""
