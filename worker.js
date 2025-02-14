@@ -1,120 +1,80 @@
-// Environment variable for Telegram bot token
-const TELEGRAM_BOT_TOKEN = '7796187337:AAF-aOcWJzQljSl6RS61ex_htwdzFPt2FvI';
+const TELEGRAM_TOKEN = '7796187337:AAF-aOcWJzQljSl6RS61ex_htwdzFPt2FvI ';
+const KV_NAMESPACE = '852e944e9aa44549a612b750658d1331'; // Create in Cloudflare dashboard
 
-// Rate limiting setup
-const rateLimit = {
-  window: 60, // 60 seconds
-  maxRequests: 3, // Max 3 requests per window
-};
-
-// In-memory storage for rate limiting (for demonstration purposes)
-const userRequests = new Map();
-
-// Helper function to analyze Stripe checkout URL
-async function analyzeStripeCheckout(url) {
-  // Extract details from the URL (mock implementation)
-  const checkoutType = url.includes('3d_secure') ? '3D' : '2D';
-  const paymentAmount = '$100.00'; // Mock amount
-  const merchantDetails = 'Example Merchant';
-  const status = '🟢 Active';
-  const analysisTime = '0.00 s';
-
-  return {
-    type: checkoutType,
-    amount: paymentAmount,
-    merchant: merchantDetails,
-    status: status,
-    analysisTime: analysisTime,
-  };
-}
-
-// Handle incoming Telegram messages
 async function handleRequest(request) {
-  const url = new URL(request.url);
-  if (request.method === 'POST' && url.pathname === `/webhook/${TELEGRAM_BOT_TOKEN}`) {
-    const update = await request.json();
-    const message = update.message;
-    const chatId = message.chat.id;
-    const text = message.text;
-
-    // Rate limiting check
-    const now = Math.floor(Date.now() / 1000);
-    if (!userRequests.has(chatId)) {
-      userRequests.set(chatId, []);
+    const url = new URL(request.url);
+    if (url.pathname === '/set-webhook') {
+        const webhookUrl = `${url.origin}/webhook`;
+        const resp = await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/setWebhook?url=${webhookUrl}`);
+        return new Response(await resp.text());
     }
-    const requests = userRequests.get(chatId).filter((time) => now - time < rateLimit.window);
-    if (requests.length >= rateLimit.maxRequests) {
-      await sendMessage(chatId, '⚠️ Rate limit exceeded. Please wait 60 seconds.');
-      return new Response('OK');
-    }
-    userRequests.get(chatId).push(now);
-
-    // Handle /start command
-    if (text === '/start') {
-      const welcomeMessage = `
-🌟 STRIPE CHECKOUT ANALYZER 🌟
-
-Send any Stripe checkout URL to analyze:
-• Checkout Type (2D/3D)
-• Payment Amount
-• Merchant Details
-• Status Check
-• Attempt Detection
-
-⚠️ Rate Limits:
-• 3 requests per 60 seconds
-
-⚠️ Warning Types:
-• Multiple attempts detected
-• 3DS triggered after attempts
-• Checkout expiration
-
-Example URL Format:
-https://checkout.stripe.com/c/pay/cs_live_...
-      `;
-      await sendMessage(chatId, welcomeMessage);
-      return new Response('OK');
-    }
-
-    // Handle Stripe checkout URL analysis
-    if (text.startsWith('https://checkout.stripe.com/')) {
-      const analysis = await analyzeStripeCheckout(text);
-      const responseMessage = `
-🔓 STRIPE CHECKOUT 🔑
-━━━━━━━━━━━━━━━━━━━━
-Type: ${analysis.type}
-Amount: ${analysis.amount}
-Merchant: ${analysis.merchant}
-Status: ${analysis.status}
-━━━━━━━━━━━━━━━━━━━━
-🕒 ${new Date().toLocaleTimeString()} • Analysis: ${analysis.analysisTime}
-      `;
-      await sendMessage(chatId, responseMessage);
-      return new Response('OK');
-    }
-
-    // Handle invalid input
-    await sendMessage(chatId, '⚠️ Invalid input. Please send a valid Stripe checkout URL.');
     return new Response('OK');
-  }
-  return new Response('Not Found', { status: 404 });
 }
 
-// Send message to Telegram
-async function sendMessage(chatId, text) {
-  const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
-  const body = {
-    chat_id: chatId,
-    text: text,
-  };
-  await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
+async function handleWebhook(event) {
+    const update = await event.request.json();
+    const message = update.message;
+    if (!message) return new Response('OK');
+
+    const chatId = message.chat.id;
+    const text = message.text || '';
+    
+    // Rate limiting
+    const rateLimitKey = `rate_limit_${chatId}`;
+    const limitData = await KV_NAMESPACE.get(rateLimitKey);
+    const [count, timestamp] = limitData ? limitData.split(':').map(Number) : [0, 0];
+    const now = Date.now();
+    
+    if (now - timestamp < 60000 && count >= 3) {
+        await sendMessage(chatId, '⚠️ Rate limit exceeded. Please wait 1 minute.');
+        return new Response('OK');
+    }
+
+    if (text.startsWith('/start')) {
+        const welcomeMsg = `🌟 STRIPE CHECKOUT ANALYZER 🌟\n\nSend any Stripe checkout URL to analyze:\n• Checkout Type (2D/3D)\n• Payment Amount\n• Merchant Details\n• Status Check\n• Attempt Detection\n\n⚠️ Rate Limits:\n• 3 requests per 60 seconds`;
+        await sendMessage(chatId, welcomeMsg);
+    } else if (text.match(/checkout\.stripe\.com\/c\/pay\/cs_/)) {
+        // Update rate limit
+        await KV_NAMESPACE.put(rateLimitKey, `${count + 1}:${now}`);
+        
+        // Simulated analysis (replace with actual API calls)
+        const analysisResult = `🔓 STRIPE CHECKOUT 🔑\n━━━━━━━━━━━━━━━━━━━━\nType: 3D Secure\nAmount: $199.99 USD\nMerchant: Example Corp\nWebsite: https://example.com\nStatus: 🟢 Active\n━━━━━━━━━━━━━━━━━━━━\n🕒 ${new Date().toLocaleTimeString()} • Analysis: 0.00s`;
+        await sendMessage(chatId, analysisResult, true);
+    } else {
+        await sendMessage(chatId, 'Please send a valid Stripe Checkout URL in the format:\nhttps://checkout.stripe.com/c/pay/cs_live_...');
+    }
+
+    return new Response('OK');
 }
 
-// Cloudflare Workers entry point
-addEventListener('fetch', (event) => {
-  event.respondWith(handleRequest(event.request));
-});
+async function sendMessage(chatId, text, monospace = false) {
+    const body = {
+        chat_id: chatId,
+        text,
+        parse_mode: monospace ? 'HTML' : undefined,
+    };
+    
+    if (monospace) {
+        text = text.replace(/(🔓 STRIPE CHECKOUT 🔑|━━━━━━━━━━━━━━━━━━━━)/g, '<b>$1</b>')
+                   .replace(/(Type:|Amount:|Merchant:|Website:|Status:)/g, '<b>$1</b>');
+        body.text = `<pre>${text}</pre>`;
+    }
+
+    await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+    });
+}
+
+export default {
+    async fetch(request, env) {
+        const kv = env[KV_NAMESPACE];
+        const url = new URL(request.url);
+        
+        if (url.pathname === '/webhook') {
+            return handleWebhook({ request, env: { KV_NAMESPACE: kv } });
+        }
+        return handleRequest(request);
+    }
+};
