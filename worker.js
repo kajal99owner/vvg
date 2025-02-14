@@ -23,25 +23,32 @@ function generateCVV() {
   return Math.floor(Math.random() * 900) + 100;
 }
 
-// Function to fetch BIN information from binlist.net
-async function fetchBINInfo(bin) {
+// Fetch BIN details from Binlist API
+async function lookupBin(bin) {
   try {
     const response = await fetch(`https://lookup.binlist.net/${bin}`, {
       headers: {
         'Accept-Version': '3',
-      },
+        'User-Agent': 'Cloudflare Worker'
+      }
     });
-    if (!response.ok) {
-      throw new Error(`BIN lookup failed: ${response.statusText}`);
-    }
-    return await response.json();
+    
+    if (!response.ok) throw new Error('BIN lookup failed');
+    
+    const data = await response.json();
+    return {
+      bank: data.bank?.name || 'Unknown Bank',
+      country: data.country?.name || 'Unknown Country',
+      type: data.type || 'Unknown Type',
+      scheme: data.scheme || 'Unknown Scheme'
+    };
   } catch (error) {
-    console.error('Error fetching BIN info:', error);
+    console.error('BIN lookup error:', error);
     return null;
   }
 }
 
-// Function to send a message to Telegram
+// Send message to Telegram
 async function sendMessage(chatId, text) {
   const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
   try {
@@ -67,20 +74,9 @@ async function handleRequest(request) {
       const text = message.text;
 
       if (text.startsWith('/gen')) {
-        const bin = text.split(' ')[1] || '424242'; // Default BIN for testing
-        const numberOfCards = 15; // Number of cards to generate
-
-        // Fetch BIN information
-        const binInfo = await fetchBINInfo(bin);
-        const binDetails = binInfo
-          ? `
-ℹ️ BIN Info:
-  - Brand: ${binInfo.brand || 'N/A'}
-  - Type: ${binInfo.type || 'N/A'}
-  - Bank: ${binInfo.bank?.name || 'N/A'}
-  - Country: ${binInfo.country?.name || 'N/A'} (${binInfo.country?.emoji || 'N/A'})
-`
-          : 'ℹ️ BIN Info: Unable to fetch details.';
+        const bin = text.split(' ')[1] || '424242'; // Default to test BIN
+        const binDetails = await lookupBin(bin);
+        const numberOfCards = 15;
 
         let responseText = `🚀 Random Test Credit Cards Generated:\n--------------------------\n`;
 
@@ -93,7 +89,10 @@ async function handleRequest(request) {
 
         responseText += `
 --------------------------
-${binDetails}
+ℹ️ Info: ${binDetails?.type || 'Test Card'}
+🏦 Bank: ${data.bank?.name || 'Test Bank'}
+🌍 Country: ${binDetails?.country || 'Test Country'}
+💳 Scheme: ${binDetails?.scheme || 'Unknown'}
         `;
 
         await sendMessage(chatId, responseText);
@@ -107,6 +106,6 @@ ${binDetails}
       return new Response('Internal Server Error', { status: 500 });
     }
   }
-
   return new Response('Invalid request', { status: 400 });
  }
+
