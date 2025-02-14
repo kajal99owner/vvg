@@ -92,7 +92,7 @@ async function deleteMessage(chatId, messageId) {
 }
 
 async function sendTelegramRequest(method, payload) {
-    const TELEGRAM_BOT_TOKEN = "YOUR_BOT_TOKEN_HERE";
+    const TELEGRAM_BOT_TOKEN = "7796187337:AAF-aOcWJzQljSl6RS61ex_htwdzFPt2FvI";
     return fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/${method}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
