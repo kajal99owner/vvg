@@ -23,6 +23,24 @@ function generateCVV() {
   return Math.floor(Math.random() * 900) + 100;
 }
 
+// Function to fetch BIN information from binlist.net
+async function fetchBINInfo(bin) {
+  try {
+    const response = await fetch(`https://lookup.binlist.net/${bin}`, {
+      headers: {
+        'Accept-Version': '3',
+      },
+    });
+    if (!response.ok) {
+      throw new Error(`BIN lookup failed: ${response.statusText}`);
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching BIN info:', error);
+    return null;
+  }
+}
+
 // Function to send a message to Telegram
 async function sendMessage(chatId, text) {
   const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
@@ -52,6 +70,18 @@ async function handleRequest(request) {
         const bin = text.split(' ')[1] || '424242'; // Default BIN for testing
         const numberOfCards = 15; // Number of cards to generate
 
+        // Fetch BIN information
+        const binInfo = await fetchBINInfo(bin);
+        const binDetails = binInfo
+          ? `
+ℹ️ BIN Info:
+  - Brand: ${binInfo.brand || 'N/A'}
+  - Type: ${binInfo.type || 'N/A'}
+  - Bank: ${binInfo.bank?.name || 'N/A'}
+  - Country: ${binInfo.country?.name || 'N/A'} (${binInfo.country?.emoji || 'N/A'})
+`
+          : 'ℹ️ BIN Info: Unable to fetch details.';
+
         let responseText = `🚀 Random Test Credit Cards Generated:\n--------------------------\n`;
 
         for (let i = 0; i < numberOfCards; i++) {
@@ -63,9 +93,7 @@ async function handleRequest(request) {
 
         responseText += `
 --------------------------
-ℹ️ Info: Test Card
-🏦 Bank: Test Bank
-🌍 Country: Test Country
+${binDetails}
         `;
 
         await sendMessage(chatId, responseText);
@@ -81,4 +109,4 @@ async function handleRequest(request) {
   }
 
   return new Response('Invalid request', { status: 400 });
-}
+ }
