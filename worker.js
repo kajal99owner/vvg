@@ -1,101 +1,101 @@
-addEventListener('fetch', event => {
-    event.respondWith(handleRequest(event.request))
-})
+addEventListener("fetch", event => {
+    event.respondWith(handleRequest(event.request));
+});
 
 async function handleRequest(request) {
-    const url = new URL(request.url);
-    if (request.method === 'POST') {
+    const { pathname } = new URL(request.url);
+
+    // Telegram Bot Token (Replace with your own)
+    const BOT_TOKEN = "7796187337:AAF-aOcWJzQljSl6RS61ex_htwdzFPt2FvI";
+    
+    // Webhook Verification
+    if (request.method === "POST") {
         const update = await request.json();
         if (update.message) {
             const chatId = update.message.chat.id;
             const text = update.message.text;
-            if (text === '/start') {
-                return sendStartMessage(chatId, update.message.from);
-            } else if (text === '/Commands') {
-                return handleCommands(update);
-            }
-        } else if (update.callback_query) {
-            const data = update.callback_query.data;
-            const chatId = update.callback_query.message.chat.id;
-            if (data === '/Commands') {
-                return handleCommands(update);
-            } else if (data === '/black') {
-                return sendJoinMessage(chatId);
-            } else if (data === '/start') {
-                return sendStartMessage(chatId, update.callback_query.from);
+
+            if (text === "/start") {
+                return sendStartMessage(chatId, BOT_TOKEN);
+            } else if (text === "/join") {
+                return checkUserSubscription(chatId, BOT_TOKEN);
             }
         }
     }
-    return new Response('OK');
+
+    return new Response("Hello, this is a Telegram Bot running on Cloudflare Workers!", { status: 200 });
 }
 
-async function sendStartMessage(chatId, user) {
-    const videoUrl = "https://t.me/kajal_developer/57";
-    const caption = `<b>👋 Welcome Back, ${user.first_name}</b>\n\n🌥️ Bot Status: Alive 🟢\n\n💞 Dev: @LakshayDied`;
-    const button = {
+async function sendStartMessage(chatId, token) {
+    const messageText = "*⭐️ To Use This Bot You Need To Join All Channels -*";
+    const photoUrl = "https://t.me/kajal_developer/9";
+    
+    const buttons = {
         inline_keyboard: [
-            [{ text: "Commands", callback_data: "/Commands" }],
-            [{ text: "DEV", url: "https://t.me/Teleservices_Api" }],
-            [{ text: "◀️ Go Back", callback_data: "/start" }]
+            [{ text: "👨‍💻 Developer", url: "tg://openmessage?user_id=6449612223" }],
+            [{ text: "🔊 Updates", url: "https://t.me/addlist/P9nJIi98NfY3OGNk" }],
+            [{ text: "✅ Join", callback_data: "/join" }]
         ]
     };
-    return sendVideo(chatId, videoUrl, caption, button);
-}
 
-async function handleCommands(update) {
-    const messageId = update.callback_query ? update.callback_query.message.message_id : update.message.message_id;
-    const chatId = update.callback_query ? update.callback_query.message.chat.id : update.message.chat.id;
-    await deleteMessage(chatId, messageId);
-    return checkChatMember(update.callback_query.from.id);
-}
-
-async function checkChatMember(userId) {
-    return sendJoinMessage(userId);
-}
-
-async function sendJoinMessage(chatId) {
-    const videoUrl = "https://t.me/kajal_developer/57";
-    const caption = `<b>[𖤐] XS developer :</b>\n\n<b>[ϟ] Current Gateways And Tools :</b>\n\n<b>[ᛟ] Charge - 0</b>\n<b>[ᛟ] Auth - 0</b>\n<b>[ᛟ] Tools - 2</b>`;
-    const button = {
-        inline_keyboard: [
-            [
-                { text: "Gateways", callback_data: "/black" },
-                { text: "Tools", callback_data: "/tools" }
-            ],
-            [
-                { text: "Channel", url: "https://t.me/Teleservices_Api" },
-                { text: "DEV", url: "https://t.me/Teleservices_Bots" }
-            ],
-            [{ text: "◀️ Go Back", callback_data: "/start" }]
-        ]
-    };
-    return sendVideo(chatId, videoUrl, caption, button);
-}
-
-async function sendVideo(chatId, videoUrl, caption, replyMarkup) {
-    const payload = {
-        chat_id: chatId,
-        video: videoUrl,
-        caption: caption,
-        parse_mode: "HTML",
-        reply_markup: replyMarkup
-    };
-    return sendTelegramRequest("sendVideo", payload);
-}
-
-async function deleteMessage(chatId, messageId) {
-    const payload = {
-        chat_id: chatId,
-        message_id: messageId
-    };
-    return sendTelegramRequest("deleteMessage", payload);
-}
-
-async function sendTelegramRequest(method, payload) {
-    const TELEGRAM_BOT_TOKEN = "7796187337:AAF-aOcWJzQljSl6RS61ex_htwdzFPt2FvI";
-    return fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/${method}`, {
+    const response = await fetch(`https://api.telegram.org/bot${token}/sendPhoto`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
+        body: JSON.stringify({
+            chat_id: chatId,
+            photo: photoUrl,
+            caption: messageText,
+            parse_mode: "Markdown",
+            reply_markup: buttons
+        })
     });
+
+    return new Response("Sent Start Message!", { status: 200 });
 }
+
+async function checkUserSubscription(chatId, token) {
+    const channel = "@kajal_developer"; // Replace with your channel
+    const response = await fetch(`https://api.telegram.org/bot${token}/getChatMember?chat_id=${channel}&user_id=${chatId}`);
+    const result = await response.json();
+
+    if (result.result && (result.result.status === "member" || result.result.status === "administrator" || result.result.status === "creator")) {
+        return sendMenu(chatId, token);
+    } else {
+        await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                chat_id: chatId,
+                text: "*❌ Must join all channels\n @kajal_developer*",
+                parse_mode: "Markdown"
+            })
+        });
+        return new Response("User not subscribed!", { status: 403 });
+    }
+}
+
+async function sendMenu(chatId, token) {
+    const menuText = "🤗 Welcome to Lx Bot 🌺";
+    const keyboard = {
+        keyboard: [
+            ["🌺 CP", "🇮🇳 Desi"],
+            ["🇬🇧 Foreign", "🐕‍🦺 Animal"],
+            ["💕 Webseries"],
+            ["💑 Gay CP"],
+            ["💸 𝘽𝙐𝙔 𝙑𝙄𝙋 💸"]
+        ],
+        resize_keyboard: true
+    };
+
+    await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            chat_id: chatId,
+            text: menuText,
+            reply_markup: keyboard
+        })
+    });
+
+    return new Response("Menu sent!", { status: 200 }); }
+)
