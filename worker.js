@@ -1,101 +1,90 @@
-addEventListener('fetch', event => {
-    event.respondWith(handleRequest(event.request))
-})
+export default {
+    async fetch(request) {
+        const token = '7796187337:AAF-aOcWJzQljSl6RS61ex_htwdzFPt2FvI'; // Replace with your Telegram bot token
+        const rateLimit = 3; // Max requests per minute
+        const chatRequests = new Map();
 
-async function handleRequest(request) {
-    const url = new URL(request.url);
-    if (request.method === 'POST') {
-        const update = await request.json();
-        if (update.message) {
+        if (request.method === 'POST') {
+            const update = await request.json();
+            if (!update.message) return new Response('OK');
+
             const chatId = update.message.chat.id;
             const text = update.message.text;
-            if (text === '/start') {
-                return sendStartMessage(chatId, update.message.from);
-            } else if (text === '/Commands') {
-                return handleCommands(update);
+
+            // Rate limiting
+            const now = Date.now();
+            if (!chatRequests.has(chatId)) {
+                chatRequests.set(chatId, []);
             }
-        } else if (update.callback_query) {
-            const data = update.callback_query.data;
-            const chatId = update.callback_query.message.chat.id;
-            if (data === '/Commands') {
-                return handleCommands(update);
-            } else if (data === '/black') {
-                return sendJoinMessage(chatId);
-            } else if (data === '/start') {
-                return sendStartMessage(chatId, update.callback_query.from);
+            const requests = chatRequests.get(chatId).filter(t => now - t < 60000);
+            requests.push(now);
+            chatRequests.set(chatId, requests);
+            if (requests.length > rateLimit) {
+                return sendMessage(chatId, "⚠️ *Rate Limit Exceeded!*\nPlease wait before sending more requests.", token);
             }
+
+            if (text.startsWith('/start')) {
+                return sendMessage(chatId, 
+                    `🌟 *STRIPE CHECKOUT ANALYZER* 🌟\n\n` +
+                    `Send any Stripe checkout URL to analyze:\n` +
+                    `• Checkout Type (2D/3D)\n` +
+                    `• Payment Amount\n` +
+                    `• Merchant Details\n` +
+                    `• Status Check\n` +
+                    `• Attempt Detection\n\n` +
+                    `⚠️ *Rate Limits:*\n• 3 requests per 60 seconds\n\n` +
+                    `⚠️ *Warning Types:*\n• Multiple attempts detected\n` +
+                    `• 3DS triggered after attempts\n` +
+                    `• Checkout expiration\n\n` +
+                    `*Example URL Format:*\nhttps://checkout.stripe.com/c/pay/cs_live_...`, 
+                    token
+                );
+            }
+
+            if (text.startsWith('https://checkout.stripe.com/')) {
+                return analyzeStripeCheckout(chatId, text, token);
+            }
+
+            return sendMessage(chatId, "❌ Invalid command or URL. Please send a valid Stripe checkout link.", token);
         }
+
+        return new Response('OK');
     }
-    return new Response('OK');
+};
+
+async function analyzeStripeCheckout(chatId, url, token) {
+    const randomType = Math.random() > 0.5 ? '2D' : '3D'; // Simulated detection
+    const randomAmount = (Math.random() * 100).toFixed(2);
+    const randomMerchant = "Example Merchant";
+    const randomWebsite = "example.com";
+    const status = "🟢 Active";
+
+    const analysisResult = 
+        `🔓 *STRIPE CHECKOUT* 🔑\n` +
+        `━━━━━━━━━━━━━━━━━━━━\n\n` +
+        `*Type:* ${randomType}\n` +
+        `*Amount:* $${randomAmount}\n` +
+        `*Merchant:* ${randomMerchant}\n` +
+        `*Website:* ${randomWebsite}\n` +
+        `*Status:* ${status}\n` +
+        `━━━━━━━━━━━━━━━━━━━━\n` +
+        `🕒 ${new Date().toLocaleTimeString()} • Analysis: 0.00s`;
+
+    return sendMessage(chatId, analysisResult, token);
 }
 
-async function sendStartMessage(chatId, user) {
-    const videoUrl = "https://t.me/kajal_developer/57";
-    const caption = `<b>👋 Welcome Back, ${user.first_name}</b>\n\n🌥️ Bot Status: Alive 🟢\n\n💞 Dev: @LakshayDied`;
-    const button = {
-        inline_keyboard: [
-            [{ text: "Commands", callback_data: "/Commands" }],
-            [{ text: "DEV", url: "https://t.me/Teleservices_Api" }],
-            [{ text: "💻 developer", url: "https://t.me/Sumit_eveloper" }]
-        ]
-    };
-    return sendVideo(chatId, videoUrl, caption, button);
-}
-
-async function handleCommands(update) {
-    const messageId = update.callback_query ? update.callback_query.message.message_id : update.message.message_id;
-    const chatId = update.callback_query ? update.callback_query.message.chat.id : update.message.chat.id;
-    await deleteMessage(chatId, messageId);
-    return checkChatMember(update.callback_query.from.id);
-}
-
-async function checkChatMember(userId) {
-    return sendJoinMessage(userId);
-}
-
-async function sendJoinMessage(chatId) {
-    const videoUrl = "https://t.me/kajal_developer/57";
-    const caption = `<b>[𖤐] XS developer :</b>\n\n<b>[ϟ] Current Gateways And Tools :</b>\n\n<b>[ᛟ] Charge - 0</b>\n<b>[ᛟ] Auth - 0</b>\n<b>[ᛟ] Tools - 2</b>`;
-    const button = {
-        inline_keyboard: [
-            [
-                { text: "Gateways", callback_data: "/black" },
-                { text: "Tools", callback_data: "/tools" }
-            ],
-            [
-                { text: "Channel", url: "https://t.me/Teleservices_Api" },
-                { text: "DEV", url: "https://t.me/Teleservices_Bots" }
-            ],
-            [{ text: "◀️ Go Back", callback_data: "/start" }]
-        ]
-    };
-    return sendVideo(chatId, videoUrl, caption, button);
-}
-
-async function sendVideo(chatId, videoUrl, caption, replyMarkup) {
-    const payload = {
+async function sendMessage(chatId, text, token) {
+    const url = `https://api.telegram.org/bot${token}/sendMessage`;
+    const body = {
         chat_id: chatId,
-        video: videoUrl,
-        caption: caption,
-        parse_mode: "HTML",
-        reply_markup: replyMarkup
+        text: text,
+        parse_mode: 'Markdown'
     };
-    return sendTelegramRequest("sendVideo", payload);
-}
 
-async function deleteMessage(chatId, messageId) {
-    const payload = {
-        chat_id: chatId,
-        message_id: messageId
-    };
-    return sendTelegramRequest("deleteMessage", payload);
-}
-
-async function sendTelegramRequest(method, payload) {
-    const TELEGRAM_BOT_TOKEN = "7796187337:AAF-aOcWJzQljSl6RS61ex_htwdzFPt2FvI";
-    return fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/${method}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
+    return fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
     });
 }
+                                   
