@@ -98,4 +98,4 @@ async function sendMenu(chatId, token) {
     });
 
     return new Response("Menu sent!", { status: 200 }); }
-)
+ }
