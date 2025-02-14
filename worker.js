@@ -40,7 +40,23 @@ async function handleRequest(request) {
       const responseText = `
         🚀 Random Test Credit Card Generated:
         --------------------------
-        🎴 ${cardNumber}|${expiryDate}|${cvv}
+        ${cardNumber}|${expiryDate}|${cvv}
+        ${cardNumber}|${expiryDate}|${cvv}
+        ${cardNumber}|${expiryDate}|${cvv}
+        ${cardNumber}|${expiryDate}|${cvv}
+        ${cardNumber}|${expiryDate}|${cvv}
+        ${cardNumber}|${expiryDate}|${cvv}
+        ${cardNumber}|${expiryDate}|${cvv}
+        ${cardNumber}|${expiryDate}|${cvv}
+        ${cardNumber}|${expiryDate}|${cvv}
+        ${cardNumber}|${expiryDate}|${cvv}
+        ${cardNumber}|${expiryDate}|${cvv}
+        ${cardNumber}|${expiryDate}|${cvv}
+        ${cardNumber}|${expiryDate}|${cvv}
+        ${cardNumber}|${expiryDate}|${cvv}
+        ${cardNumber}|${expiryDate}|${cvv}
+        ${cardNumber}|${expiryDate}|${cvv}
+ 
         📅 Expiry Date: 
         🔑 CVV: 
         --------------------------
