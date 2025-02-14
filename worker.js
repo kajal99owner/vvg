@@ -1,4 +1,4 @@
-const TELEGRAM_TOKEN = '7796187337:AAF-aOcWJzQljSl6RS61ex_htwdzFPt2FvI ';
+const TELEGRAM_TOKEN = '7796187337:AAF-aOcWJzQljSl6RS61ex_htwdzFPt2FvI';
 const KV_NAMESPACE = '852e944e9aa44549a612b750658d1331'; // Create in Cloudflare dashboard
 
 async function handleRequest(request) {
