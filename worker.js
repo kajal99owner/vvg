@@ -1,48 +1,63 @@
-addEventListener('fetch', event => {
-     event.respondWith(handleRequest(event.request))
-   })
+addEventListener("fetch", event => {
+    event.respondWith(handleRequest(event.request));
+});
 
-   async function handleRequest(request) {
-     if (request.method === 'POST') {
-       const body = await request.json()
-       const message = body.message || body.channel_post
-       if (message) {
-         const chatId = message.chat.id
-         const text = message.text || ''
+// Replace with your Telegram bot token
+const TELEGRAM_BOT_TOKEN = "7796187337:AAF-aOcWJzQljSl6RS61ex_htwdzFPt2FvI";
+const TELEGRAM_API_URL = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}`;
 
-         // Example integration with an external service (e.g., https://blackbox.ai)
-         // You can replace this with actual API calls to blackbox.ai
-         const blackboxResponse = await fetch('https://blackbox.ai/some-endpoint', {
-           method: 'POST',
-           headers: {
-             'Content-Type': 'application/json',
-           },
-           body: JSON.stringify({ query: text }),
-         })
+async function handleRequest(request) {
+    if (request.method === "POST") {
+        const update = await request.json();
+        return await processUpdate(update);
+    }
+    return new Response("OK", { status: 200 });
+}
 
-         const blackboxData = await blackboxResponse.json()
+async function processUpdate(update) {
+    if (!update.message || !update.message.text) return new Response("No message", { status: 200 });
 
-         // Send a response back to Telegram
-         const responseText = blackboxData.response || `You said: ${text}`
-         await sendMessage(chatId, responseText)
-       }
-       return new Response('OK', { status: 200 })
-     }
-     return new Response('Not Found', { status: 404 })
-   }
+    const chatId = update.message.chat.id;
+    const text = update.message.text;
 
-   async function sendMessage(chatId, text) {
-     const botToken = '7796187337:AAF-aOcWJzQljSl6RS61ex_htwdzFPt2FvI'
-     const url = `https://api.telegram.org/bot${botToken}/sendMessage`
-     const response = await fetch(url, {
-       method: 'POST',
-       headers: {
-         'Content-Type': 'application/json',
-       },
-       body: JSON.stringify({
-         chat_id: chatId,
-         text: text,
-       }),
-     })
-     return response.json()
-   }
+    let responseText = "Hello! Send me a message.";
+    
+    if (text.startsWith("/start")) {
+        responseText = "Welcome to the Cloudflare Worker Telegram bot!";
+    } else {
+        responseText = await getAIResponse(text);
+    }
+
+    await sendMessage(chatId, responseText);
+    return new Response("Message sent", { status: 200 });
+}
+
+async function sendMessage(chatId, text) {
+    const url = `${TELEGRAM_API_URL}/sendMessage`;
+    const body = JSON.stringify({ chat_id: chatId, text });
+
+    return fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body
+    });
+}
+
+// Example AI response function using Blackbox AI
+async function getAIResponse(input) {
+    const url = "https://blackbox.ai/api"; // Replace with actual API endpoint
+    const body = JSON.stringify({ prompt: input });
+
+    try {
+        const response = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body
+        });
+
+        const result = await response.json();
+        return result.reply || "AI response unavailable.";
+    } catch (error) {
+        return "Error getting AI response.";
+    }
+}
