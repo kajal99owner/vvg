@@ -323,7 +323,7 @@ async function sendPhotos(chatId) {
     ];
 
     for (let i = 0; i < photoUrls.length; i++) {
-        await fetch(`${BASE_URL}/sendPhoto`, {
+        await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendPhoto`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
