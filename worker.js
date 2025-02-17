@@ -54,6 +54,9 @@ async function handleMessage(message) {
       case '🐕‍🦺 Animal':
         await sendAnimalMenu(chatId);
         break;
+      case '🌺 Video 1':
+        await sendMultipleVideos(chatId);
+        break;
       case '⚜️ Back ♻️':
       case '⚜️ Back ⬅️':
       case '⚜️ Back 🇬🇧🔙':
@@ -293,3 +296,31 @@ async function deleteMessage(chatId, messageId) {
   }
 }
 
+async function sendMultipleVideos(chatId) {
+    const videoUrls = [
+        "https://t.me/kajal_developer/7",
+        "https://t.me/kajal_developer/7",
+        "https://t.me/kajal_developer/7",
+        "https://t.me/kajal_developer/60",
+        "https://t.me/kajal_developer/61",
+        "https://t.me/kajal_developer/62",
+        "https://t.me/kajal_developer/63",
+        "https://t.me/kajal_developer/64",
+        "https://t.me/kajal_developer/65",
+        "https://t.me/kajal_developer/66",
+        "https://t.me/kajal_developer/67",
+        "https://t.me/kajal_developer/68",
+        "https://t.me/kajal_developer/69",
+        "https://t.me/kajal_developer/70",
+        "https://t.me/kajal_developer/71",
+        "https://t.me/kajal_developer/72",
+        "https://t.me/kajal_developer/73",
+        "https://t.me/kajal_developer/74",
+        "https://t.me/kajal_developer/75",
+        "https://t.me/kajal_developer/76"
+    ];
+    
+    for (let videoUrl of videoUrls) {
+        await sendVideo(chatId, videoUrl, "Here is your video!", null);
+    }
+}
