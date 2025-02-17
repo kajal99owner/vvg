@@ -55,7 +55,7 @@ async function handleMessage(message) {
         await sendAnimalMenu(chatId);
         break;
       case '🌺 Video 1':
-        await sendMultipleVideos(chatId);
+        await sendPhotos(chatId);
         break;
       case '⚜️ Back ♻️':
       case '⚜️ Back ⬅️':
@@ -296,58 +296,41 @@ async function deleteMessage(chatId, messageId) {
   }
 }
 
-async function sendMultipleVideos(chatId) {
-    const videoUrls = [
-        "https://t.me/kajal_developer/7",
-        "https://t.me/kajal_developer/7",
-        "https://t.me/kajal_developer/7",
-        "https://t.me/kajal_developer/60",
-        "https://t.me/kajal_developer/61",
-        "https://t.me/kajal_developer/62",
-        "https://t.me/kajal_developer/63",
-        "https://t.me/kajal_developer/64",
-        "https://t.me/kajal_developer/65",
-        "https://t.me/kajal_developer/66",
-        "https://t.me/kajal_developer/67",
-        "https://t.me/kajal_developer/68",
-        "https://t.me/kajal_developer/69",
-        "https://t.me/kajal_developer/70",
-        "https://t.me/kajal_developer/71",
-        "https://t.me/kajal_developer/72",
-        "https://t.me/kajal_developer/73",
-        "https://t.me/kajal_developer/74",
-        "https://t.me/kajal_developer/75",
-        "https://t.me/kajal_developer/76"
+async function sendPhotos(chatId) {
+    const photoUrls = [
+        "https://t.me/kajal_developer/58",
+        "https://t.me/kajal_developer/58",
+        "https://t.me/kajal_developer/58",
+        "https://example.com/photo4.jpg",
+        "https://example.com/photo5.jpg",
+        "https://example.com/photo6.jpg",
+        "https://example.com/photo7.jpg",
+        "https://example.com/photo8.jpg",
+        "https://example.com/photo9.jpg",
+        "https://example.com/photo10.jpg",
+        "https://example.com/photo11.jpg",
+        "https://example.com/photo12.jpg"
     ];
-    
-    for (let videoUrl of videoUrls) {
-        await sendVideo(chatId, videoUrl, "Here is your video!", null);
+
+    const channelName = "pornhub_Developer"; // Replace with your channel username
+    const buttons = [
+        [
+            {
+                text: "Join " + channelName,
+                url: "https://t.me/" + channelName
+            }
+        ]
+    ];
+
+    for (let i = 0; i < photoUrls.length; i++) {
+        await fetch(`${BASE_URL}/sendPhoto`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                chat_id: chatId,
+                photo: photoUrls[i],
+                reply_markup: { inline_keyboard: buttons }
+            })
+        });
     }
-}
-
-async function sendVideo(chatId, videoUrl, caption, keyboard = null) {
-  try {
-    const payload = {
-      chat_id: chatId,
-      video: videoUrl,
-      caption: caption,
-      parse_mode: 'MarkdownV2'
-    };
-
-    if (keyboard) {
-      payload.reply_markup = {
-        keyboard: keyboard.map(row => row.map(text => ({ text }))),
-        resize_keyboard: true,
-        one_time_keyboard: true
-      };
-    }
-
-    await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendVideo`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-  } catch (error) {
-    console.error('Error sending video:', error);
   }
-}
