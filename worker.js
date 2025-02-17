@@ -16,6 +16,7 @@ async function handleRequest(request) {
       } 
       else if (update.message) {
         await handleMessage(update.message);
+        await handleMention(update.message);
       }
       return new Response('OK');
     } catch (error) {
