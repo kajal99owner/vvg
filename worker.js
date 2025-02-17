@@ -1,10 +1,3 @@
-//# Sumit developer <\>
-//# Don't Remove Credit 🥺
-//# Telegram Channel @Sumit_Bots
-//# Back-Up Channel @SumitBotz
-//# Developer @SumitDeveloper
-
-
 const BOT_TOKEN = "7796187337:AAF-aOcWJzQljSl6RS61ex_htwdzFPt2FvI";
 const CHANNEL_USERNAME = "@kajal_developer";
 const TELEGRAM_API_URL = `https://api.telegram.org/bot${BOT_TOKEN}/`;
