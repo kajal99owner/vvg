@@ -299,15 +299,55 @@ async function deleteMessage(chatId, messageId) {
 async function sendMultipleVideos(chatId) {
     const videoUrls = [
         "https://t.me/kajal_developer/7",
-        // ... other URLs ...
+        "https://t.me/kajal_developer/7",
+        "https://t.me/kajal_developer/7",
+        "https://t.me/kajal_developer/60",
+        "https://t.me/kajal_developer/61",
+        "https://t.me/kajal_developer/62",
+        "https://t.me/kajal_developer/63",
+        "https://t.me/kajal_developer/64",
+        "https://t.me/kajal_developer/65",
+        "https://t.me/kajal_developer/66",
+        "https://t.me/kajal_developer/67",
+        "https://t.me/kajal_developer/68",
+        "https://t.me/kajal_developer/69",
+        "https://t.me/kajal_developer/70",
+        "https://t.me/kajal_developer/71",
+        "https://t.me/kajal_developer/72",
+        "https://t.me/kajal_developer/73",
+        "https://t.me/kajal_developer/74",
+        "https://t.me/kajal_developer/75",
         "https://t.me/kajal_developer/76"
     ];
     
-    try {
-        await Promise.all(videoUrls.map(url => sendVideo(chatId, url, "Here is your video!", null)));
-        await sendMessage(chatId, "All videos have been sent!");
-    } catch (error) {
-        console.error('Error sending multiple videos:', error);
-        await sendMessage(chatId, "There was an error sending some videos. Please try again later.");
+    for (let videoUrl of videoUrls) {
+        await sendVideo(chatId, videoUrl, "Here is your video!", null);
     }
+}
+
+async function sendVideo(chatId, videoUrl, caption, keyboard = null) {
+  try {
+    const payload = {
+      chat_id: chatId,
+      video: videoUrl,
+      caption: caption,
+      parse_mode: 'MarkdownV2'
+    };
+
+    if (keyboard) {
+      payload.reply_markup = {
+        keyboard: keyboard.map(row => row.map(text => ({ text }))),
+        resize_keyboard: true,
+        one_time_keyboard: true
+      };
+    }
+
+    await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendVideo`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+  } catch (error) {
+    console.error('Error sending video:', error);
+  }
 }
